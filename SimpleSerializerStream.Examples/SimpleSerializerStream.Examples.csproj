@@ -50,9 +50,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SimpleSerializerStream\SimpleSerializerStream.csproj">
+    <ProjectReference Include="..\SimpleSerializer\SimpleSerializer.csproj">
       <Project>{0c045040-2fe9-460c-b78d-63e7d9003681}</Project>
-      <Name>SimpleSerializerStream</Name>
+      <Name>SimpleSerializer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

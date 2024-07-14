@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleSerializer
 {
@@ -302,6 +297,35 @@ namespace SimpleSerializer
         }*/
         #endregion
         #endregion
+
+        #region Text
+
+        public SerializerStream String(ref string value)
+        {
+            AppendType(PrimitiveType.String);
+            switch (currentMode)
+            {
+                case SerializationMode.Serialize:
+                    if (value.Length > short.MaxValue) {
+                        throw new ArgumentException("String to long");
+                    }
+                    var l1 = BitConverter.GetBytes((short)value.Length);
+                    Put(l1);
+                    var content = Encoding.ASCII.GetBytes(value);
+                    outer.Write(content, 0, content.Length);
+                    break;
+                case SerializationMode.Deserialize:
+                    //value = BitConverter.ToUInt16(Get(new byte[2]), 0);
+                    var l2 = BitConverter.ToInt16(Get(new byte[2]), 0);
+                    var buffer = new byte[l2];
+                    var dummy = outer.Read(buffer, 0, l2) == l2 ? 0 : throw new EndOfStreamException();
+                    value = Encoding.ASCII.GetString(buffer);
+                    break;
+            }
+            return this;
+        }
+
+        #endregion
         #endregion
 
         public void AppendType(PrimitiveType type)
@@ -374,6 +398,9 @@ namespace SimpleSerializer
 
         IDouble8 = 13,
         IDouble16 = 14,
-        IDouble32 = 15
+        IDouble32 = 15,
+        
+        Char = 16,
+        String = 17
     }
 }

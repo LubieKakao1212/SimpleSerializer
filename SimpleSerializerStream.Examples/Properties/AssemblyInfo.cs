@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // Ogólne informacje o zestawie są kontrolowane poprzez następujący 
 // zestaw atrybutów. Zmień wartości tych atrybutów, aby zmodyfikować informacje
 // powiązane z zestawem.
-[assembly: AssemblyTitle("SimpleSerializerStream.Examples")]
+[assembly: AssemblyTitle("SimpleSerializer.Examples")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Dell")]
-[assembly: AssemblyProduct("SimpleSerializerStream.Examples")]
+[assembly: AssemblyProduct("SimpleSerializer.Examples")]
 [assembly: AssemblyCopyright("Copyright © Dell 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

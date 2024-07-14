@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SimpleSerializerStream\SimpleSerializerStream.csproj" />
+    <ProjectReference Include="..\SimpleSerializer\SimpleSerializer.csproj" />
   </ItemGroup>
 
 </Project>
