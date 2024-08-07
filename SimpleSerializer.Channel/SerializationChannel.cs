@@ -5,22 +5,23 @@ using System.Collections.Generic;
 namespace SimpleSerializer.Channel {
     public class SerializationChannel {
 
-        public delegate void SerializationCallback<T>(ref T obj, SerializerStream stream);
+        public delegate void SerializationCallback<in T>(T obj, SerializerStream stream);
 
         private SerializerStream checksumStream = new SerializerStream(new MemoryStream(), SerializationMode.Serialize);
     
         private Dictionary<Type, (Entry entry, int checksum)> entries = new Dictionary<Type, (Entry entry, int checksum)>();
     
-        public void Register<T>(SerializationCallback<ValueType> serializer, T defaultValue = default) where T: struct {
+        public void Register<T>(SerializationCallback<T> serializerIn) where T :  class, new() {
             if (entries.ContainsKey(typeof(T))) {
                 throw new ArgumentException("Duplicate serialization type");
             }
+
+            var serializer = ConvertSerializer(serializerIn);
+            var entry = new Entry(typeof(T), serializer, () => new T());
         
-            var entry = new Entry(typeof(T), serializer, () => defaultValue);
-        
-            var valueCpy = (ValueType)defaultValue;
-            serializer(ref valueCpy, checksumStream);
-        
+            var dummyValue = new T();
+            serializer(dummyValue, checksumStream);
+            
             var checksum = checksumStream.SignatureHash;
             checksumStream.ResetHard(SerializationMode.Serialize);
             entries.Add(typeof(T), (entry, checksum));
@@ -78,41 +79,40 @@ namespace SimpleSerializer.Channel {
             return null;
         }
 
-        public void Serialize<T>(in T value, Stream stream) where T : struct {
+        public void Serialize<T>(in T value, Stream stream) where T : class {
             if (entries.TryGetValue(typeof(T), out var entry)) {
                 var serializationStream = new SerializerStream(stream, SerializationMode.Serialize);
-                var v = (ValueType) value;
-                entry.entry.serializer(ref v, serializationStream);
+                entry.entry.serializer(value, serializationStream);
             }
             else {
                 throw new ApplicationException("Type cannot be (de)serialized by this channel");
             }
         }
 
-        public void Deserialize<T>(out T value, Stream stream) where T : struct {
+        public void Deserialize<T>(out T value, Stream stream) where T : class, new() {
             if (entries.TryGetValue(typeof(T), out var entry)) {
-                var serializationStream = new SerializerStream(stream, SerializationMode.Serialize);
-                value = default;
-                var v = (ValueType)value;
-                entry.entry.serializer(ref v, serializationStream);
-                value = (T)v;
+                var serializationStream = new SerializerStream(stream, SerializationMode.Deserialize);
+                value = (T)entry.entry.constructor();
+                entry.entry.serializer(value, serializationStream);
             }
             else {
                 throw new ApplicationException("Type cannot be (de)serialized by this channel");
             }
+        }
+
+        private SerializationCallback<object> ConvertSerializer<T>(SerializationCallback<T> serializer) where T : class {
+            return (value, stream) => {
+                var obj = (T)value;
+                serializer.Invoke(obj, stream);
+            };
         }
     
         private readonly struct Entry {
             public readonly Type targetType;
             public readonly Func<object> constructor;
-            public readonly SerializationCallback<ValueType> serializer;
+            public readonly SerializationCallback<object> serializer;
 
-            public Entry(Type targetType, SerializationCallback<ValueType> serializer, Func<object> constructor) {
-                /*if (constructor == null) {
-                    activator
-                }*/
-                
-                
+            public Entry(Type targetType, SerializationCallback<object> serializer, Func<object> constructor) {
                 this.targetType = targetType;
                 this.constructor = constructor;
                 this.serializer = serializer;
